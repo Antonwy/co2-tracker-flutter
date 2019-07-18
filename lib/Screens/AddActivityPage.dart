@@ -1,9 +1,12 @@
 import 'package:co2_tracker/CustomComponents/ActivityCard.dart';
 import 'package:co2_tracker/CustomComponents/CustomAppBar.dart';
 import 'package:co2_tracker/CustomComponents/GradientContainer.dart';
+import 'package:co2_tracker/Helper/ColorSchemeHelper.dart';
 import 'package:co2_tracker/Helper/User.dart';
 import 'package:co2_tracker/Screens/DistancePage.dart';
+import 'package:co2_tracker/Transitions/AddActivityTransition.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class AddActivityPage extends StatefulWidget {
   final User user;
@@ -15,7 +18,8 @@ class AddActivityPage extends StatefulWidget {
 }
 
 class _AddActivityPageState extends State<AddActivityPage> {
-  int id = 1;
+  int id = 0;
+  GlobalKey activeWidgetKey;
 
   Map<String, dynamic> transportation = {
     "id": 1,
@@ -25,6 +29,8 @@ class _AddActivityPageState extends State<AddActivityPage> {
 
   @override
   Widget build(BuildContext context) {
+    ColorSchemeHelper colorScheme = Provider.of<ColorSchemeHelper>(context);
+
     return GradientContainer(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -32,49 +38,61 @@ class _AddActivityPageState extends State<AddActivityPage> {
           title: "ADD ACTIVITY",
           user: widget.user,
         ),
-        body: Container(
-          margin: EdgeInsets.all(10),
-          child: Column(
-            children: <Widget>[
-              Expanded(
-                child: GridView.count(
-                  padding: EdgeInsets.all(10),
-                  mainAxisSpacing: 15,
-                  crossAxisSpacing: 15,
-                  crossAxisCount: 2,
-                  children: createActivityCards(),
+        body: Builder(
+                  builder: (BuildContext context) {
+                    return Container(
+            margin: EdgeInsets.all(10),
+            child: Column(
+              children: <Widget>[
+                Expanded(
+                  child: GridView.count(
+                    padding: EdgeInsets.all(10),
+                    mainAxisSpacing: 15,
+                    crossAxisSpacing: 15,
+                    crossAxisCount: 2,
+                    children: createActivityCards(),
+                  ),
                 ),
-              ),
-              Container(
-                margin: EdgeInsets.only(bottom: 10),
-                child: OutlineButton(
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => DistancePage(
-                                transportation: transportation,
-                                user: widget.user)));
-                  },
-                  child: Text("Next"),
-                  textColor: Colors.white,
-                  splashColor: Colors.white.withOpacity(.2),
-                  borderSide: BorderSide(color: Colors.white),
-                  padding: EdgeInsets.symmetric(horizontal: 50),
-                ),
-              )
-            ],
-          ),
+                Container(
+                  margin: EdgeInsets.only(bottom: 10),
+                  child: OutlineButton(
+                    onPressed: () {
+                      if(id != 0){
+                        Navigator.push(
+                          context,
+                          AddActivityTransition(
+                            startWidgetKey: activeWidgetKey,
+                            borderRadius: 10.0,
+                            duration: Duration(milliseconds: 400),
+                              widget: DistancePage(
+                                  transportation: transportation,
+                                  user: widget.user)));
+                      }else {
+                        Scaffold.of(context).showSnackBar(new SnackBar(
+                          content: Text("Select Transportation Method!"),
+                        ));
+                      }
+
+                    },
+                    child: Text(
+                      "Next",
+                      style: colorScheme.textStyle,
+                    ),
+                    splashColor: Colors.white.withOpacity(.2),
+                    borderSide: BorderSide(color: colorScheme.iconColor),
+                    padding: EdgeInsets.symmetric(horizontal: 50),
+                  ),
+                )
+              ],
+            ),
+          );
+                  }
         ),
       ),
     );
   }
 
-  Color hexToColor(String code) {
-    return new Color(int.parse(code.substring(1, 7), radix: 16) + 0xFF000000);
-  }
-
-  createActivityCards() {
+  List<ActivityCard> createActivityCards() {
     return [
       ActivityCard(
           id: 1,
@@ -115,8 +133,9 @@ class _AddActivityPageState extends State<AddActivityPage> {
     ];
   }
 
-  handleActivityClicked(Map<String, dynamic> transportation) {
+  handleActivityClicked(Map<String, dynamic> transportation, GlobalKey key) {
     this.transportation = transportation;
+    this.activeWidgetKey = key;
 
     setState(() {
       this.id = transportation["id"];

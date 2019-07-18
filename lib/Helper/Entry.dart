@@ -1,23 +1,33 @@
 import 'package:intl/intl.dart';
 
 class Entry {
-  final int score;
-  final DateTime date;
+  int score;
+  DateTime date;
 
-  Entry({this.score, this.date});
+  int amount;
+  String name;
+  int typeID;
 
-  factory Entry.fromJson(Map<String, dynamic> json) {
+  Entry.short({this.score, this.date});
 
+  Entry.detail({this.amount, this.name, this.date, this.typeID});
+
+  factory Entry.fromJsonDetail(Map<String, dynamic> json) {
     String date = json['date'];
-    DateFormat format = new DateFormat("EEE MMM d y");
+    DateTime finalDate = DateTime.parse(date);
 
-    return Entry(
-      score: json['score'],
-      date: format.parse(date)
+    return Entry.detail(
+      amount: json['amount'],
+      name: json['name'],
+      date: finalDate,
+      typeID: json['typeID']
     );
   }
 
+  factory Entry.fromJson(Map<String, dynamic> json) {
+    String date = json['date'];
+    DateFormat format = new DateFormat("EEE MMM d y");
 
-
-
+    return Entry.short(score: json['score'], date: format.parse(date));
+  }
 }

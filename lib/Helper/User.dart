@@ -5,8 +5,9 @@ class User {
   Map<String, dynamic> user;
   List<Entry> entries;
   List<PieData> pieData;
+  bool hasData;
 
-  User({this.user, this.entries, this.pieData});
+  User({this.user, this.entries, this.pieData, this.hasData});
 
   User.short({Map<String, dynamic> this.user}) {
     entries = new List(0);
@@ -20,14 +21,24 @@ class User {
     var pieData = json['pieData'] as List;
     List<PieData> pieList = pieData.map((i) => PieData.fromJson(i)).toList();
 
+    var userData = json['user'];
+
+    DateTime createdAt = DateTime.parse(userData['createdAt']);
+
+    var user = {
+      "score": userData['score'],
+      "id": userData['_id'],
+      "username": userData['username'],
+      "email": userData['email'],
+      "createdAt": createdAt
+    };
+
     return User(
-      user: json['user'],
+      user: user,
       entries: entryList,
       pieData: pieList,
+      hasData: true
     );
   }
-
-
-
 
 }

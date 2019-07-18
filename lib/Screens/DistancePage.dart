@@ -3,11 +3,14 @@ import 'dart:convert';
 import 'package:co2_tracker/CustomComponents/CustomAppBar.dart';
 import 'package:co2_tracker/CustomComponents/GradientContainer.dart';
 import 'package:co2_tracker/CustomComponents/NumberPicker.dart';
+import 'package:co2_tracker/CustomComponents/RadioList.dart';
+import 'package:co2_tracker/Helper/ColorSchemeHelper.dart';
 import 'package:co2_tracker/Helper/Constants.dart';
 import 'package:co2_tracker/Helper/User.dart';
 import 'package:co2_tracker/Screens/Dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 
 class DistancePage extends StatefulWidget {
   final Map<String, dynamic> transportation;
@@ -24,6 +27,7 @@ class _DistancePageState extends State<DistancePage> {
   int _distance = 10;
   int _sizeVal = 0;
   int _driveVal = 0;
+  ColorSchemeHelper colorScheme;
 
   @override
   void initState() {
@@ -33,6 +37,9 @@ class _DistancePageState extends State<DistancePage> {
 
   @override
   Widget build(BuildContext context) {
+
+    colorScheme = Provider.of<ColorSchemeHelper>(context);
+
     return GradientContainer(
       child: Scaffold(
         appBar: CustomAppBar(
@@ -50,9 +57,7 @@ class _DistancePageState extends State<DistancePage> {
               ),
               Text(
                 "Choose your transportation Method:",
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
+                style: colorScheme.textStyle.copyWith(fontSize: 15,
                     fontWeight: FontWeight.bold),
               ),
               SizedBox(
@@ -67,7 +72,7 @@ class _DistancePageState extends State<DistancePage> {
                     child: Icon(
                       widget.transportation['icon'],
                       size: 60,
-                      color: Colors.white,
+                      color: colorScheme.iconColor,
                     ),
                   )),
                   widget.transportation['id'] == 1
@@ -81,13 +86,15 @@ class _DistancePageState extends State<DistancePage> {
                       children: <Widget>[
                         Text(
                           widget.transportation['name'],
-                          style: TextStyle(color: Colors.white),
+                          style: colorScheme.textStyle,
                         ),
                         NumberPicker.integer(
                             initialValue: _distance,
                             minValue: getMinValue(),
                             maxValue: getMaxValue(),
                             step: getStepSize(),
+                            initText: colorScheme.textStyle.copyWith(fontWeight: FontWeight.bold, fontSize: 25),
+                            textStyle: colorScheme.textStyle.copyWith(color: colorScheme.textStyle.color.withOpacity(.8)),
                             onChanged: (item) {
                               setState(() {
                                 _distance = item;
@@ -95,7 +102,7 @@ class _DistancePageState extends State<DistancePage> {
                             }),
                         Text(
                           "KM",
-                          style: TextStyle(color: Colors.white),
+                          style: colorScheme.textStyle,
                         ),
                       ],
                     ),
@@ -111,9 +118,6 @@ class _DistancePageState extends State<DistancePage> {
                       int type = widget.transportation['id'];
                       int typeID =
                           type == 1 ? type + _driveVal + _sizeVal : type;
-                      print('Type: ' +
-                          (type == 1 ? type + _driveVal + _sizeVal : type)
-                              .toString());
 
                       try {
                         await addActivity(body: {
@@ -129,10 +133,9 @@ class _DistancePageState extends State<DistancePage> {
                           MaterialPageRoute(
                               builder: (context) => Dashboard()));
                     },
-                    child: Text("Save"),
-                    textColor: Colors.white,
+                    child: Text("Save", style: colorScheme.textStyle,),
                     splashColor: Colors.white.withOpacity(.2),
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: colorScheme.iconColor),
                     padding: EdgeInsets.symmetric(horizontal: 50),
                   ),
                 ),
@@ -145,7 +148,6 @@ class _DistancePageState extends State<DistancePage> {
   }
 
   int getMaxValue() {
-    print(widget.transportation['id']);
     switch (widget.transportation['id']) {
       case 10:
         return 5000;
@@ -187,10 +189,6 @@ class _DistancePageState extends State<DistancePage> {
     return 10;
   }
 
-  Color hexToColor(String code) {
-    return new Color(int.parse(code.substring(1, 7), radix: 16) + 0xFF000000);
-  }
-
   createCarPicker() {
     return Container(
         margin: EdgeInsets.only(top: 30),
@@ -201,64 +199,37 @@ class _DistancePageState extends State<DistancePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Container(
-                  margin: EdgeInsets.only(left: 10),
+                  margin: EdgeInsets.only(bottom: 10),
                   child: Text(
                     "Size",
                     style: TextStyle(
-                        color: Colors.white,
+                        color: colorScheme.iconColor,
                         fontSize: 20,
                         fontWeight: FontWeight.bold),
                   ),
                 ),
-                Row(
-                  children: <Widget>[
-                    Radio(
+                RadioList(
+                  globalLabelStyle: colorScheme.textStyle,
+                  onChanged: changeSize,
+                  radioStyle: RadioStyle(
+                    borderColor: colorScheme.iconColor,
+                    iconColor: colorScheme.fromColor
+                  ),
+                  radioList: <RadioModel>[
+                    RadioModel(
+                      defaultClicked: true,
                       value: 0,
-                      groupValue: _sizeVal,
-                      onChanged: changeSize,
-                      activeColor: Colors.white,
+                      label: "Small",
                     ),
-                    Text(
-                      "Small",
-                      style: TextStyle(
-                          color: _sizeVal == 0
-                              ? Colors.white
-                              : Colors.white.withOpacity(.7)),
-                    )
-                  ],
-                ),
-                Row(
-                  children: <Widget>[
-                    Radio(
+                    RadioModel(
+                      defaultClicked: true,
                       value: 1,
-                      groupValue: _sizeVal,
-                      onChanged: changeSize,
-                      activeColor: Colors.white,
+                      label: "Medium"
                     ),
-                    Text(
-                      "Medium",
-                      style: TextStyle(
-                          color: _sizeVal == 1
-                              ? Colors.white
-                              : Colors.white.withOpacity(.7)),
-                    )
-                  ],
-                ),
-                Row(
-                  children: <Widget>[
-                    Radio(
+                    RadioModel(
                       value: 2,
-                      groupValue: _sizeVal,
-                      onChanged: changeSize,
-                      activeColor: Colors.white,
+                      label: "Large"
                     ),
-                    Text(
-                      "Large",
-                      style: TextStyle(
-                          color: _sizeVal == 2
-                              ? Colors.white
-                              : Colors.white.withOpacity(.7)),
-                    )
                   ],
                 ),
               ],
@@ -267,64 +238,37 @@ class _DistancePageState extends State<DistancePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Container(
-                  margin: EdgeInsets.only(left: 10),
+                  margin: EdgeInsets.only(bottom: 10),
                   child: Text(
                     "Drive",
                     style: TextStyle(
-                        color: Colors.white,
+                        color: colorScheme.iconColor,
                         fontSize: 20,
                         fontWeight: FontWeight.bold),
                   ),
                 ),
-                Row(
-                  children: <Widget>[
-                    Radio(
+                RadioList(
+                  globalLabelStyle: colorScheme.textStyle,
+                  onChanged: changeSize,
+                  radioStyle: RadioStyle(
+                    borderColor: colorScheme.iconColor,
+                    iconColor: colorScheme.fromColor
+                  ),
+                  radioList: <RadioModel>[
+                    RadioModel(
+                      defaultClicked: true,
                       value: 0,
-                      groupValue: _driveVal,
-                      onChanged: changeDrive,
-                      activeColor: Colors.white,
+                      label: "Diesel",
                     ),
-                    Text(
-                      "Diesel",
-                      style: TextStyle(
-                          color: _driveVal == 0
-                              ? Colors.white
-                              : Colors.white.withOpacity(.7)),
-                    )
-                  ],
-                ),
-                Row(
-                  children: <Widget>[
-                    Radio(
+                    RadioModel(
+                      defaultClicked: true,
                       value: 3,
-                      groupValue: _driveVal,
-                      onChanged: changeDrive,
-                      activeColor: Colors.white,
+                      label: "Petrol"
                     ),
-                    Text(
-                      "Petrol",
-                      style: TextStyle(
-                          color: _driveVal == 3
-                              ? Colors.white
-                              : Colors.white.withOpacity(.7)),
-                    )
-                  ],
-                ),
-                Row(
-                  children: <Widget>[
-                    Radio(
+                    RadioModel(
                       value: 6,
-                      groupValue: _driveVal,
-                      onChanged: changeDrive,
-                      activeColor: Colors.white,
+                      label: "Electro"
                     ),
-                    Text(
-                      "Electro",
-                      style: TextStyle(
-                          color: _driveVal == 6
-                              ? Colors.white
-                              : Colors.white.withOpacity(.7)),
-                    )
                   ],
                 ),
               ],
@@ -353,7 +297,6 @@ class _DistancePageState extends State<DistancePage> {
 
     var response = await http.post("${Constants.URL}/entry/add",
         headers: headers, body: json.encode(body));
-    print(response.body);
 
     if (response.statusCode == 200) {
       return;

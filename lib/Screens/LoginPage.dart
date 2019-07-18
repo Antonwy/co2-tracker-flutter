@@ -2,10 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:co2_tracker/CustomComponents/GradientContainer.dart';
 import 'package:co2_tracker/CustomComponents/StyledInput.dart';
+import 'package:co2_tracker/Helper/ColorSchemeHelper.dart';
 import 'package:co2_tracker/Helper/Constants.dart';
 import 'package:co2_tracker/Screens/RegisterPage.dart';
+import 'package:co2_tracker/Transitions/ColoredSwitchTransition.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import '../Helper/Login.dart';
 import '../Helper/User.dart';
 import './Dashboard.dart';
@@ -30,171 +33,191 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    ColorSchemeHelper colorScheme = Provider.of<ColorSchemeHelper>(context);
+
     return GradientContainer(
         child: Scaffold(
-      resizeToAvoidBottomPadding: false,
+      resizeToAvoidBottomPadding: true,
       backgroundColor: Colors.transparent,
-      body: Padding(
-        padding: EdgeInsets.all(30.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            Flexible(
-              flex: 8,
-              fit: FlexFit.loose,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
+      body: ListView(children: <Widget>[
+        Container(
+          height: MediaQuery.of(context).size.height -
+              MediaQuery.of(context).padding.top -
+              MediaQuery.of(context).padding.bottom,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 30.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                Flexible(
+                  flex: 8,
+                  fit: FlexFit.loose,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
-                      Container(
-                        width: 120,
-                        height: 60,
-                        child: FlareActor(
-                          'assets/animations/logo-anim.flr',
-                          animation: 'CO2',
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Container(
+                            width: 120,
+                            height: 60,
+                            child: FlareActor(
+                              'assets/animations/logo-anim.flr',
+                              animation: 'CO2',
+                            ),
+                          ),
+                          Text(
+                            "Score.",
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 25,
+                                color: Colors.redAccent),
+                          ),
+                        ],
                       ),
+                      loading
+                          ? Container(
+                              margin: EdgeInsets.only(top: 30),
+                              alignment: Alignment(0, 0),
+                              child: CircularProgressIndicator(
+                                backgroundColor: Colors.white,
+                              ))
+                          : Container(),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  flex: 10,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
                       Text(
-                        "Score.",
+                        "Welcome Back!",
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 25,
-                            color: Colors.redAccent),
+                            fontSize: 30,
+                            color: colorScheme.iconColor),
+                      ),
+                      Form(
+                        key: _formKey,
+                        autovalidate: _autoValidate,
+                        child: Column(
+                          children: <Widget>[
+                            SizedBox(
+                              height: 20,
+                            ),
+                            StyledInput(
+                              withTransition: true,
+                              keyboardType: TextInputType.emailAddress,
+                              labelText: "Email",
+                              validator: (value) {
+                                Pattern pattern =
+                                    r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+                                RegExp regex = new RegExp(pattern);
+                                if (!regex.hasMatch(value))
+                                  return 'Enter Valid Email';
+                                else
+                                  return null;
+                              },
+                              onSaved: (value) {
+                                _email = value;
+                              },
+                            ),
+                            SizedBox(height: 10),
+                            StyledInput(
+                              withTransition: true,
+                              obscuredText: true,
+                              labelText: "Password",
+                              validator: (value) {
+                                if (value.isEmpty)
+                                  return "Type in your Password!";
+                                return null;
+                              },
+                              onSaved: (value) {
+                                _password = value;
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      loginError
+                          ? Container(
+                              margin: EdgeInsets.only(top: 10),
+                              child: Text(
+                                "Wrong credentials! Please try again!",
+                                style: TextStyle(color: Colors.red),
+                              ))
+                          : Container(),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  flex: 2,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Sign in",
+                        style: TextStyle(
+                            color: colorScheme.iconColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 30),
+                      ),
+                      FloatingActionButton(
+                        heroTag: "",
+                        elevation: 0,
+                        backgroundColor: Colors.redAccent,
+                        onPressed: handleLogin,
+                        child: Icon(Icons.navigate_next),
                       ),
                     ],
                   ),
-                  loading
-                      ? Container(
-                          margin: EdgeInsets.only(top: 30),
-                          alignment: Alignment(0, 0),
-                          child: CircularProgressIndicator(
-                            backgroundColor: Colors.white,
-                          ))
-                      : Container(),
-                ],
-              ),
-            ),
-            Flexible(
-              flex: 10,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    "Welcome Back!",
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 30,
-                        color: Colors.white),
-                  ),
-                  Form(
-                    key: _formKey,
-                    autovalidate: _autoValidate,
-                    child: Column(
-                      children: <Widget>[
-                        SizedBox(
-                          height: 20,
-                        ),
-                        StyledInput(
-                          withTransition: true,
-                          keyboardType: TextInputType.emailAddress,
-                          labelText: "Email",
-                          validator: (value) {
-                            Pattern pattern =
-                                r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
-                            RegExp regex = new RegExp(pattern);
-                            if (!regex.hasMatch(value))
-                              return 'Enter Valid Email';
-                            else
-                              return null;
-                          },
-                          onSaved: (value) {
-                            _email = value;
-                          },
-                        ),
-                        SizedBox(height: 10),
-                        StyledInput(
-                          withTransition: true,
-                          obscuredText: true,
-                          labelText: "Password",
-                          validator: (value) {
-                            if (value.isEmpty) return "Type in your Password!";
-                            return null;
-                          },
-                          onSaved: (value) {
-                            _password = value;
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  loginError
-                      ? Container(
-                          margin: EdgeInsets.only(top: 10),
-                          child: Text(
-                            "Wrong credentials! Please try again!",
-                            style: TextStyle(color: Colors.red),
-                          ))
-                      : Container(),
-                ],
-              ),
-            ),
-            Flexible(
-              flex: 2,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Text(
-                    "Sign in",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 30),
-                  ),
-                  FloatingActionButton(
-                    elevation: 0,
-                    backgroundColor: Colors.redAccent,
-                    onPressed: handleLogin,
-                    child: Icon(Icons.navigate_next),
-                  ),
-                ],
-              ),
-            ),
-            Flexible(
-              flex: 1,
-              child: Row(
-                children: <Widget>[
-                  Text(
-                    "Don't have an account yet?",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  InkWell(
-                    borderRadius: BorderRadius.circular(2),
-                    child: Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Text(
-                        "Sign up",
-                        style: TextStyle(
-                            color: Colors.white,
-                            decoration: TextDecoration.underline,
-                            fontWeight: FontWeight.bold),
+                ),
+                Flexible(
+                  flex: 1,
+                  child: Row(
+                    children: <Widget>[
+                      Text(
+                        "Don't have an account yet?",
+                        style: colorScheme.textStyle,
                       ),
-                    ),
-                    onTap: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (c) => RegisterPage()));
-                    },
-                  )
-                ],
-              ),
+                      InkWell(
+                        borderRadius: BorderRadius.circular(2),
+                        child: Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text(
+                            "Sign up",
+                            style: TextStyle(
+                                color: colorScheme.iconColor,
+                                decoration: TextDecoration.underline,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              ColoredSwitchTransition(
+                                  widget: RegisterPage(),
+                                  transitionGradient: LinearGradient(
+                                      begin: Alignment.bottomRight,
+                                      end: Alignment.topLeft,
+                                      colors: [
+                                        colorScheme.fromColor,
+                                        colorScheme.toColor
+                                      ])));
+                        },
+                      )
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+      ]),
     ));
   }
 
@@ -232,9 +255,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   saveUserID(String id) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    await prefs.setString(Constants.USER_ID_KEY, id);
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString(Constants.USER_ID_KEY, id);
+    } on Exception catch (e) {
+      print(e);
+    }
   }
 }
 
@@ -248,7 +274,6 @@ Future<User> createPost(String url, {Map body}) async {
       .post(url, body: json.encode(body), headers: headers)
       .then((http.Response response) {
     final int statusCode = response.statusCode;
-    print('STATUSCODE: $statusCode, body: $body, response: ${response.body}');
     if (statusCode < 200 || statusCode > 400 || json == null) {
       throw new Exception("Error while fetching data");
     }

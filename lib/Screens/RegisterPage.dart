@@ -2,10 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:co2_tracker/CustomComponents/GradientContainer.dart';
 import 'package:co2_tracker/CustomComponents/StyledInput.dart';
+import 'package:co2_tracker/Helper/ColorSchemeHelper.dart';
 import 'package:co2_tracker/Helper/Constants.dart';
 import 'package:co2_tracker/Screens/LoginPage.dart';
+import 'package:co2_tracker/Transitions/ColoredSwitchTransition.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import './Dashboard.dart';
 import 'package:flare_flutter/flare_actor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,7 +19,6 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-
   GlobalKey<FormState> _formKey = new GlobalKey();
 
   bool _autoValidate = false;
@@ -30,13 +32,18 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    ColorSchemeHelper colorScheme = Provider.of<ColorSchemeHelper>(context);
+
     return GradientContainer(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        resizeToAvoidBottomInset: false,
-        body: Builder(
-          builder: (context) =>
-            Padding(
+        resizeToAvoidBottomInset: true,
+        body: ListView(children: <Widget>[
+          Container(
+            height: MediaQuery.of(context).size.height -
+                MediaQuery.of(context).padding.top -
+                MediaQuery.of(context).padding.bottom,
+            child: Padding(
               padding: EdgeInsets.all(30.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -63,12 +70,18 @@ class _RegisterPageState extends State<RegisterPage> {
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 25,
-                                  color: Colors.redAccent
-                              ),
+                                  color: Colors.redAccent),
                             ),
                           ],
                         ),
-                        loading ? Container(margin: EdgeInsets.only(top: 30), alignment: Alignment(0, 0), child: CircularProgressIndicator(backgroundColor: Colors.white,)) : Container()
+                        loading
+                            ? Container(
+                                margin: EdgeInsets.only(top: 30),
+                                alignment: Alignment(0, 0),
+                                child: CircularProgressIndicator(
+                                  backgroundColor: Colors.white,
+                                ))
+                            : Container()
                       ],
                     ),
                   ),
@@ -83,10 +96,11 @@ class _RegisterPageState extends State<RegisterPage> {
                           style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 30,
-                              color: Colors.white
-                          ),
+                              color: colorScheme.iconColor),
                         ),
-                        SizedBox(height: 20,),
+                        SizedBox(
+                          height: 20,
+                        ),
                         Form(
                           key: _formKey,
                           autovalidate: _autoValidate,
@@ -96,7 +110,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                 keyboardType: TextInputType.text,
                                 labelText: "Username",
                                 validator: (value) {
-                                  if(value.isEmpty) return "Type in your Username!";
+                                  if (value.isEmpty)
+                                    return "Type in your Username!";
                                   return null;
                                 },
                                 onSaved: (value) {
@@ -127,24 +142,25 @@ class _RegisterPageState extends State<RegisterPage> {
                                 obscuredText: true,
                                 labelText: "Password",
                                 validator: (value) {
-                                  if(value.isEmpty) return "Type in your Password!";
+                                  if (value.isEmpty)
+                                    return "Type in your Password!";
                                   return null;
                                 },
                                 onSaved: (value) {
-                                  print(value);
                                   _password = value;
                                 },
                               ),
                             ],
                           ),
                         ),
-                        loginError ?
-                        Container(
-                            margin: EdgeInsets.only(top: 10),
-                            child: Text("Something went wrong! Please try again!", style: TextStyle(color: Colors.red),)
-                        )
-                            :
-                        Container(),
+                        loginError
+                            ? Container(
+                                margin: EdgeInsets.only(top: 10),
+                                child: Text(
+                                  "Something went wrong! Please try again!",
+                                  style: TextStyle(color: Colors.red),
+                                ))
+                            : Container(),
                       ],
                     ),
                   ),
@@ -155,7 +171,10 @@ class _RegisterPageState extends State<RegisterPage> {
                       children: <Widget>[
                         Text(
                           "Sign up",
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 30),
+                          style: TextStyle(
+                              color: colorScheme.iconColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 30),
                         ),
                         FloatingActionButton(
                           elevation: 0,
@@ -173,7 +192,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       children: <Widget>[
                         Text(
                           "Already have an account?",
-                          style: TextStyle(color: Colors.white),
+                          style: colorScheme.textStyle,
                         ),
                         InkWell(
                           borderRadius: BorderRadius.circular(2),
@@ -181,27 +200,40 @@ class _RegisterPageState extends State<RegisterPage> {
                             padding: EdgeInsets.all(8.0),
                             child: Text(
                               "Sign in",
-                              style: TextStyle(color: Colors.white, decoration: TextDecoration.underline, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  color: colorScheme.iconColor,
+                                  decoration: TextDecoration.underline,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ),
                           onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
+                            Navigator.push(
+                                context,
+                                ColoredSwitchTransition(
+                                    widget: LoginPage(),
+                                    transitionGradient: LinearGradient(
+                                        begin: Alignment.bottomRight,
+                                        end: Alignment.topLeft,
+                                        colors: [
+                                          colorScheme.fromColor,
+                                          colorScheme.toColor
+                                        ])));
                           },
                         )
-
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-        ),
+          ),
+        ]),
       ),
     );
   }
 
   handleRegister() async {
-    if(_formKey.currentState.validate()) {
+    if (_formKey.currentState.validate()) {
       _formKey.currentState.save();
 
       Map<String, dynamic> body = {
@@ -210,14 +242,20 @@ class _RegisterPageState extends State<RegisterPage> {
         "password": _password
       };
 
-      setState(() {loading = true; loginError = false;});
+      setState(() {
+        loading = true;
+        loginError = false;
+      });
       try {
         var res = await createPost(Constants.URL + "/users/signup", body: body);
-        setState(() {loading = false;});
+        setState(() {
+          loading = false;
+        });
 
         await saveUserID(res['userId']);
 
-        Navigator.push(context, MaterialPageRoute(builder: (context) => Dashboard()));
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => Dashboard()));
       } catch (err) {
         print(err);
         setState(() {
@@ -240,16 +278,15 @@ class _RegisterPageState extends State<RegisterPage> {
 }
 
 Future<dynamic> createPost(String url, {Map body}) async {
-
   Map<String, String> headers = {
-    'Content-type' : 'application/json',
+    'Content-type': 'application/json',
     'Accept': 'application/json',
   };
 
-  http.Response response = await http.post(url, body: json.encode(body), headers: headers);
+  http.Response response =
+      await http.post(url, body: json.encode(body), headers: headers);
   final int statusCode = response.statusCode;
-  print('STATUSCODE: $statusCode, body: $body, response: ${response.body}');
-  if(statusCode < 200 || statusCode > 400 || json == null) {
+  if (statusCode < 200 || statusCode > 400 || json == null) {
     throw new Exception("Error while fetching data");
   }
   return json.decode(response.body);
